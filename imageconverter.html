@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Converter</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Image Converter</h1>
+    <form id="uploadForm">
+        <input type="file" id="fileInput" accept="image/*" multiple required>
+        <label for="formatSelect">Pilih format output:</label>
+        <select id="formatSelect">
+            <option value="image/jpeg">JPG</option>
+            <option value="image/png">PNG</option>
+            <option value="image/jpeg">JPEG</option>
+            <option value="image/webp">WEBP</option>
+        </select>
+        <button type="submit">Upload</button>
+    </form>
+    <div id="progress"></div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const files = document.getElementById('fileInput').files;
+            const selectedFormat = document.getElementById('formatSelect').value;
+            const progressDiv = document.getElementById('progress');
+            progressDiv.innerHTML = '';
+
+            if (files.length > 100) {
+                alert('Anda hanya dapat mengupload maksimal 100 gambar.');
+                return;
+            }
+
+            // Fungsi untuk mengonversi gambar dengan jeda
+            const convertImage = (file, index) => {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+
+                    img.onload = () => {
+                        // Buat canvas untuk konversi
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0);
+
+                        // Konversi ke format yang dipilih
+                        canvas.toBlob((blob) => {
+                            const link = document.createElement('a');
+                            link.href = URL.createObjectURL(blob);
+                            link.download = file.name.replace(/\.[^/.]+$/, "") + getExtension(selectedFormat);
+                            link.click();
+
+                            const p = document.createElement('p');
+                            p.textContent = `${file.name}: Berhasil dikonversi ke ${getExtension(selectedFormat)}.`;
+                            progressDiv.appendChild(p);
+                        }, selectedFormat);
+                    };
+                };
+                reader.readAsDataURL(file);
+            };
+
+            // Loop untuk mengonversi setiap gambar dengan jeda
+            for (let i = 0; i < files.length; i++) {
+                setTimeout(() => {
+                    convertImage(files[i], i);
+                }, i * 2000); // Jeda 2 detik antara setiap konversi
+            }
+        });
+
+        function getExtension(mimeType) {
+            switch (mimeType) {
+                case 'image/jpeg':
+                    return '.jpg';
+                case 'image/png':
+                    return '.png';
+                case 'image/webp':
+                    return '.webp';
+                default:
+                    return '.jpg'; // Default to JPG if unknown
+            }
+        }
+    </script>
+</body>
+</html>
